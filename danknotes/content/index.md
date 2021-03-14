@@ -71,3 +71,9 @@ docker run -it --rm -p 8080:80 danknotes
 ```
 
 Navigate to http://localhost:8080 and voila!
+
+After pushing changes, run this on the docker host:
+
+``` bash
+docker exec -it $(docker ps | grep danknotes | awk '{print $1}') bash -c "cd danknotes && git config --global user.email "email@email.com" && git config --global user.name "user" && git stash && git pull origin master"
+```
