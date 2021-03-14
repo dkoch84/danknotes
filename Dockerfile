@@ -1,4 +1,4 @@
-FROM php:8.0.3-apache-buster AS base
+FROM php:8.0.3-apache-buster
 EXPOSE 80
 EXPOSE 443
 COPY . /var/www/html
