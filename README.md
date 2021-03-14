@@ -19,16 +19,17 @@ blah blah blah. Imagine I learned some stuff about some stuff. Well, i did. PHP 
 
 **dank notes** is a reason to try something else, and a way to build and maintain websites that may or may not be blogs or portfolios or wikis. It's built with [**Pico**](http://picocms.org/), a CMS (think blog software that normies use, except it seems designed for us nerds), but the cool thing is Pico just uses Markdown as the main driver of content creation. Pico needs PHP, and web _sites_ need web _servers_, so we have a PHP [image](https://github.com/docker-library/php/blob/64811791f0682262478d73514819908fcfe73d7f/8.0/buster/apache/Dockerfile) based on Debian 8 Buster with Apache.
 
+## how i got here
+
 To get started with Pico, we download the Pico [project](https://github.com/picocms/Pico) and place that inside a folder called danknotes. For reasons yet to be discovered or dealt with, put that in another folder called danknotes (git stuff and web server hacks).
 
 ```bash
 mkdir -p danknotes/danknotes && cd danknotes/danknotes
-git clone git@github.com:picocms/Pico.git
-cd Pico && mv * ../
-rm Pico
 ```
 
-We're using the base project with samples because it's a shortcut to have documentation and examples on using Pico, Twig, etc alongside our chosen theme.
+Download the latest pico [release](https://github.com/picocms/Pico/releases/tag/v2.1.4), unpack it into `danknotes/danknotes`
+
+We're keeping the samples because it's a shortcut to have documentation and examples on using Pico, Twig, etc alongside our chosen theme. We move them so they act like normal content pages, to help us understand how content is handled.
 
 ```bash
 # should be in the innner danknotes directory
