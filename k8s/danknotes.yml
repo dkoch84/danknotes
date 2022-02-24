@@ -1,0 +1,122 @@
+# https://kubernetes.io/docs/concepts/services-networking/service/
+apiVersion: v1
+kind: Service
+metadata:
+  name: danknotes
+  namespace: danknotes
+spec:
+  selector:
+    app: danknotes
+  type: ClusterIP
+  ports:
+  - name: danknotes
+    protocol: TCP
+    port: 80
+    targetPort: 80
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: danknotes
+  namespace: danknotes
+spec:
+  routes:
+  - match: PathPrefix(`/danknotes`)
+    kind: Rule
+    services:
+    - name: danknotes
+      port: 80
+    middlewares:
+    - name: stripprefix
+      namespace: danknotes
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: stripprefix
+  namespace: danknotes
+spec:
+  stripPrefix:
+    prefixes:
+      - /danknotes
+    forceSlash: true
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: nfs
+  namespace: danknotes
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadOnlyMany
+  storageClassName: "" 
+  nfs:
+    path: "/srv/nfs/share2/notes/content"
+    server: "192.168.1.7"
+    readOnly: true
+  claimRef:
+    name: nfs
+    namespace: danknotes  
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs
+  namespace: danknotes
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: "" 
+  volumeName: nfs
+---
+# https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  danknotes
+  namespace: danknotes
+  labels:
+    app:  danknotes
+spec:
+  selector:
+    matchLabels:
+      app: danknotes
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  danknotes
+    spec:
+      containers:
+      - name:  danknotes
+        image:  dkoch1984/danknotes:arm64
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        ports:
+        - containerPort:  80
+          name:  danknotes
+        volumeMounts:
+        - name: nfs
+          mountPath: /var/www/html/danknotes/content
+      volumes:
+      - name: nfs
+        persistentVolumeClaim:
+          claimName: nfs
+      restartPolicy: Always
+---

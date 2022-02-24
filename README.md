@@ -1,19 +1,8 @@
 ## danknotes
 
-This is a note taking website, or will be, managed by PicoCMS, a flat file CMS that leverages markdown for content creation. It is intended to be deployed as a docker container or kubernetes pod. It requires PHP (for Pico) and git (for dynamic content updates). Apache is configured.
-
-To do:
-
-- configure SSL with letsencrypt (possibly use wildcard certs)
-- configure an "api" that will listen for a signal to do a 'git pull'
-  - possible use of docker's **volume binds** instead
-    - content and site in different repos
-
-Here's the actual index of the site:
+A site that displays notes taken in markdown, in a clean an simple way. It's a way for me to expand my kubernetes knowledge while organizing my thoughts. 
 
 # dank notes
-
-blah blah blah. Imagine I learned some stuff about some stuff. Well, i did. PHP images on docker include the PHP extensions `dom` and `mbstring`. You need to install PHP along with these extensions if you wanna run this locally. Not needed cuz Docker. Now imagine this shit was code that made sense and I was describing something cool. That's what this is gonna be for.
 
 ## what is dank notes?
 
@@ -63,32 +52,28 @@ Then we have this simple Dockerfile:
 
 ```Dockerfile
 FROM php:8.0.3-apache-buster
-RUN apt update && apt -y install git
 EXPOSE 80
 EXPOSE 443
 COPY danknotes/apache/apache.conf /etc/apache2/sites-available/000-default.conf
 COPY . /var/www/html
 ```
 
-Note, we're installing git in the image.
-
 ```bash
 # in the outer danknotes directory, project root
 sudo bash
-docker build . -t danknotes
+# do multiarch stuff
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+docker buildx build --platform=linux/arm64 -t dkoch1984/danknotes:arm64
 docker run -it --rm -p 8080:80 danknotes
 ```
 
-Navigate to http://localhost:8080 and voila!
+Test it: Navigate to http://localhost:8080 and voila!
 
-After pushing changes, run this on the docker host:
+Next, deploy to kubernetes with [danknotes.yml](./k8s/danknotes.yml):
 
-``` bash
-docker exec -it \
-  $(docker ps | grep danknotes | awk '{print $1}') \
-bash -c "cd danknotes && \
-git config --global user.email "email@email.com" && \
-git config --global user.name "user" && \
-git stash && \
-git pull origin master"
+```bash
+kubectl create ns danknotes
+kubectl apply -f k8s/danknotes.yml
 ```
+
+That creates a PersistentVolume, PersistentVolumeClaim, Service, IngressRoute, Middleware and Deployment. It's running on my Rock64 ARM cluster, running k3s which uses Traefik for cluster networking.
